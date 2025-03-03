@@ -58,7 +58,7 @@ const IndexScreen = ({ navigation }: { navigation: any }) => {
           <MaterialCommunityIcons 
             name="handcuffs" 
             size={24} 
-            color={currentTheme.primaryColor} 
+            color={"#000"} 
             style={styles.icon} 
           />
         )}

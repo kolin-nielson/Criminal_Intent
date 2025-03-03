@@ -1,14 +1,7 @@
 import React, { createContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-interface Theme {
-  primaryColor: string;
-  secondaryColor: string;
-  backgroundColor: string;
-  textColor: string;
-  borderColor: string;
-  placeholderColor: string;
-}
+import { Theme, themes } from '../constants/themes';
+import { View, Text } from 'react-native';
 
 interface SettingsContextValue {
   theme: string;
@@ -16,99 +9,54 @@ interface SettingsContextValue {
   saveTheme: (newTheme: string) => Promise<void>;
 }
 
-const themes: Record<string, Theme> = {
-  purple: {
-    primaryColor: '#8e44ad',
-    secondaryColor: '#3498db',
-    backgroundColor: '#2c1b3d',
-    textColor: '#e0d8e9',
-    borderColor: '#5e2e7d',
-    placeholderColor: '#a68bb8',
-  },
-  teal: {
-    primaryColor: '#16a085',
-    secondaryColor: '#2ecc71',
-    backgroundColor: '#f0f7f6',
-    textColor: '#2d6f62',
-    borderColor: '#88b8ae',
-    placeholderColor: '#77a69c',
-  },
-  emerald: {
-    primaryColor: '#2ecc71',
-    secondaryColor: '#27ae60',
-    backgroundColor: '#e8f5e9',
-    textColor: '#1a5c38',
-    borderColor: '#8bc34a',
-    placeholderColor: '#6ea959',
-  },
-  crimson: {
-    primaryColor: '#c0392b',
-    secondaryColor: '#e74c3c',
-    backgroundColor: '#3d1a16',
-    textColor: '#f2c6c2',
-    borderColor: '#7a2e27',
-    placeholderColor: '#b58a84',
-  },
-  indigo: {
-    primaryColor: '#2980b9',
-    secondaryColor: '#8e44ad',
-    backgroundColor: '#1e2a44',
-    textColor: '#d1e0eb',
-    borderColor: '#4a688e',
-    placeholderColor: '#8ba3c1',
-  },
-  gold: {
-    primaryColor: '#d4a017',
-    secondaryColor: '#f1c40f',
-    backgroundColor: '#fff8e1',
-    textColor: '#6d5209',
-    borderColor: '#e6bf5e',
-    placeholderColor: '#b38e3f',
-  },
-};
-
 export const SettingsContext = createContext<SettingsContextValue>({
-  theme: 'purple',
-  currentTheme: themes.purple,
+  theme: 'midnight',
+  currentTheme: themes.midnight,
   saveTheme: async () => {},
 });
 
 export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [theme, setTheme] = useState<string>('purple');
+  const [theme, setTheme] = useState<string | null>(null); // Start with null to indicate loading
 
   useEffect(() => {
     const loadSettings = async () => {
       try {
         const savedTheme = await AsyncStorage.getItem('theme');
-        if (savedTheme && themes[savedTheme]) setTheme(savedTheme);
+        setTheme(savedTheme && themes[savedTheme] ? savedTheme : 'midnight');
       } catch (error) {
         console.error('Error loading settings:', error);
+        setTheme('midnight'); // Fallback on error
       }
     };
     loadSettings();
   }, []);
 
+  // Render a loading state until the theme is loaded
+  if (theme === null) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <Text>Loading theme...</Text>
+      </View>
+    );
+  }
+
+  const currentTheme = themes[theme]; // Guaranteed to be defined after loading
+
   const saveTheme = async (newTheme: string) => {
+    if (!themes[newTheme]) {
+      console.warn(`Theme ${newTheme} not found, skipping update`);
+      return;
+    }
     try {
-      if (themes[newTheme]) {
-        await AsyncStorage.setItem('theme', newTheme);
-        setTheme(newTheme);
-      }
+      await AsyncStorage.setItem('theme', newTheme);
+      setTheme(newTheme); // Update state to trigger rerender
     } catch (error) {
       console.error('Error saving theme:', error);
     }
   };
 
-  const currentTheme = themes[theme] || themes.purple;
-
   return (
-    <SettingsContext.Provider
-      value={{
-        theme,
-        currentTheme,
-        saveTheme,
-      }}
-    >
+    <SettingsContext.Provider value={{ theme, currentTheme, saveTheme }}>
       {children}
     </SettingsContext.Provider>
   );

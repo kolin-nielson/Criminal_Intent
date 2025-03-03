@@ -1,9 +1,9 @@
 import React, { useState, useCallback, useContext } from 'react';
-import { View, FlatList, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, FlatList, Text, StyleSheet } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { getCrimes } from '../utils/crimeStorage';
 import { SettingsContext } from '../context/SettingsContext';
+import CrimeListItem from '../components/CrimeListItem';
 
 interface Crime {
   id: string;
@@ -27,11 +27,7 @@ const IndexScreen = ({ navigation }: { navigation: any }) => {
     }
   }, []);
 
-  useFocusEffect(
-    React.useCallback(() => {
-      fetchCrimes();
-    }, [fetchCrimes])
-  );
+  useFocusEffect(useCallback(() => { fetchCrimes(); }, [fetchCrimes]));
 
   React.useLayoutEffect(() => {
     navigation.setOptions({
@@ -40,38 +36,18 @@ const IndexScreen = ({ navigation }: { navigation: any }) => {
     });
   }, [navigation, currentTheme]);
 
-  const renderItem = ({ item }: { item: Crime }) => (
-    <TouchableOpacity
-      onPress={() => navigation.navigate('CrimeDetail', { id: item.id })}
-      style={[styles.listItem, { backgroundColor: currentTheme.secondaryColor }]}
-    >
-      <View style={styles.listItemContent}>
-        <View>
-          <Text style={[styles.title, { color: currentTheme.textColor }]}>
-            {item.title || 'Untitled Crime'}
-          </Text>
-          <Text style={[styles.date, { color: currentTheme.placeholderColor }]}>
-            {new Date(item.date).toLocaleDateString()}
-          </Text>
-        </View>
-        {item.solved && (
-          <MaterialCommunityIcons 
-            name="handcuffs" 
-            size={24} 
-            color={"#000"} 
-            style={styles.icon} 
-          />
-        )}
-      </View>
-    </TouchableOpacity>
-  );
-
   return (
     <View style={[styles.container, { backgroundColor: currentTheme.backgroundColor }]}>
       <FlatList
         data={crimes}
         keyExtractor={(item) => item.id}
-        renderItem={renderItem}
+        renderItem={({ item }) => (
+          <CrimeListItem
+            crime={item}
+            onPress={() => navigation.navigate('CrimeDetail', { id: item.id })}
+            theme={currentTheme}
+          />
+        )}
         ListEmptyComponent={
           <Text style={[styles.emptyText, { color: currentTheme.textColor }]}>
             No crimes recorded
@@ -83,35 +59,8 @@ const IndexScreen = ({ navigation }: { navigation: any }) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  listItem: {
-    padding: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-  },
-  listItemContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  title: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  date: {
-    fontSize: 12,
-    marginTop: 2,
-  },
-  icon: {
-    marginRight: 10,
-  },
-  emptyText: {
-    textAlign: 'center',
-    padding: 20,
-    fontSize: 16,
-  },
+  container: { flex: 1 },
+  emptyText: { textAlign: 'center', padding: 20, fontSize: 16 },
 });
 
 export default IndexScreen;

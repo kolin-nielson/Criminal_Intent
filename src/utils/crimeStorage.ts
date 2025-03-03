@@ -67,3 +67,14 @@ export const getCrimeById = async (id: string): Promise<Crime | undefined> => {
     return undefined;
   }
 };
+
+export const deleteCrime = async (id: string): Promise<void> => {
+  try {
+    const crimes = await getCrimes();
+    const updatedCrimes = crimes.filter((crime) => crime.id !== id);
+    await saveCrimes(updatedCrimes);
+  } catch (error) {
+    console.error('Error deleting crime:', error);
+    throw error;
+  }
+};

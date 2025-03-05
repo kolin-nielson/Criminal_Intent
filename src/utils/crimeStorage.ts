@@ -27,7 +27,7 @@ export const saveCrimes = async (crimes: Crime[]): Promise<void> => {
     await AsyncStorage.setItem(CRIMES_KEY, JSON.stringify(crimes));
   } catch (error) {
     console.error('Error saving crimes:', error);
-    throw error;
+    return Promise.reject(new Error('Failed to save crimes to storage'));
   }
 };
 
@@ -39,7 +39,7 @@ export const addCrime = async (crime: Crime): Promise<Crime> => {
     return crime;
   } catch (error) {
     console.error('Error adding crime:', error);
-    throw error;
+    return Promise.reject(new Error('Failed to add crime'));
   }
 };
 
@@ -48,13 +48,13 @@ export const updateCrime = async (id: string, updatedCrime: Crime): Promise<void
     const crimes = await getCrimes();
     const index = crimes.findIndex((crime) => crime.id === id);
     if (index === -1) {
-      throw new Error('Crime not found');
+      return Promise.reject(new Error('Crime not found'));
     }
     crimes[index] = { ...updatedCrime, id };
     await saveCrimes(crimes);
   } catch (error) {
     console.error('Error updating crime:', error);
-    throw error;
+    return Promise.reject(new Error('Failed to update crime'));
   }
 };
 
@@ -75,6 +75,6 @@ export const deleteCrime = async (id: string): Promise<void> => {
     await saveCrimes(updatedCrimes);
   } catch (error) {
     console.error('Error deleting crime:', error);
-    throw error;
+    return Promise.reject(new Error('Failed to delete crime'));
   }
 };

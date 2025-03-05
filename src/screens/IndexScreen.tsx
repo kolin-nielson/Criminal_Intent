@@ -1,9 +1,10 @@
-import React, { useState, useCallback, useContext } from 'react';
-import { View, FlatList, Text, StyleSheet } from 'react-native';
+import React, { useState, useCallback, useContext, useEffect } from 'react';
+import { View, FlatList, StyleSheet } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { getCrimes } from '../utils/crimeStorage';
 import { SettingsContext } from '../context/SettingsContext';
-import CrimeListItem from '../components/CrimeListItem';
+import CrimeListItem from '../components/crime/CrimeListItem';
+import { BodyText } from '../components/common/Typography';
 
 interface Crime {
   id: string;
@@ -29,7 +30,7 @@ const IndexScreen = ({ navigation }: { navigation: any }) => {
 
   useFocusEffect(useCallback(() => { fetchCrimes(); }, [fetchCrimes]));
 
-  React.useLayoutEffect(() => {
+  useEffect(() => {
     navigation.setOptions({
       headerStyle: { backgroundColor: currentTheme.primaryColor },
       headerTintColor: '#fff',
@@ -45,13 +46,12 @@ const IndexScreen = ({ navigation }: { navigation: any }) => {
           <CrimeListItem
             crime={item}
             onPress={() => navigation.navigate('CrimeDetail', { id: item.id })}
-            theme={currentTheme}
           />
         )}
         ListEmptyComponent={
-          <Text style={[styles.emptyText, { color: currentTheme.textColor }]}>
+          <BodyText style={styles.emptyText}>
             No crimes recorded
-          </Text>
+          </BodyText>
         }
       />
     </View>
@@ -59,7 +59,7 @@ const IndexScreen = ({ navigation }: { navigation: any }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  container: { flex: 1, padding: 8 },
   emptyText: { textAlign: 'center', padding: 20, fontSize: 16 },
 });
 

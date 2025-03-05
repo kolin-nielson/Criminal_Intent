@@ -1,16 +1,17 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { View, Text, StyleSheet, Alert } from 'react-native';
+import { View, StyleSheet, Alert } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 import uuid from 'react-native-uuid';
 import { getCrimeById, addCrime, updateCrime, deleteCrime } from '../utils/crimeStorage';
 import { SettingsContext } from '../context/SettingsContext';
-import PhotoSelector from '../components/PhotoSelector';
-import TitleInput from '../components/TitleInput';
-import DetailsInput from '../components/DetailsInput';
-import DateSelector from '../components/DateSelector';
-import SolvedCheckbox from '../components/SolvedCheckbox';
-import SaveButton from '../components/SaveButton';
-import DeleteButton from '../components/DeleteButton';
+import PhotoSelector from '../components/crime/PhotoSelector';
+import DateSelector from '../components/crime/DateSelector';
+import SolvedCheckbox from '../components/crime/SolvedCheckbox';
+import SaveButton from '../components/crime/SaveButton';
+import DeleteButton from '../components/crime/DeleteButton';
+import TextInput from '../components/common/TextInput';
+import { Title } from '../components/common/Typography';
+import Toast from '../components/common/Toast';
 
 interface Crime {
   id: string;
@@ -31,6 +32,9 @@ const CrimeDetailScreen = ({ navigation }: { navigation: any }) => {
   const [date, setDate] = useState(new Date());
   const [solved, setSolved] = useState(false);
   const [photo, setPhoto] = useState<string | undefined>(undefined);
+  const [isSaved, setIsSaved] = useState(false);
+  const [toastVisible, setToastVisible] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
 
   useEffect(() => {
     if (id) {
@@ -52,12 +56,22 @@ const CrimeDetailScreen = ({ navigation }: { navigation: any }) => {
     }
   }, [id]);
 
-  React.useLayoutEffect(() => {
+  useEffect(() => {
     navigation.setOptions({
       headerStyle: { backgroundColor: currentTheme.primaryColor },
       headerTintColor: '#fff',
     });
   }, [navigation, currentTheme]);
+
+  const showToast = (message: string) => {
+    setToastMessage(message);
+    setToastVisible(true);
+    
+    // Hide toast after 3 seconds
+    setTimeout(() => {
+      setToastVisible(false);
+    }, 3000);
+  };
 
   const saveCrime = async () => {
     if (!title.trim()) {
@@ -75,10 +89,17 @@ const CrimeDetailScreen = ({ navigation }: { navigation: any }) => {
       };
       if (id) {
         await updateCrime(crimeData.id, crimeData);
+        showToast('Crime updated successfully!');
       } else {
         await addCrime(crimeData);
+        showToast('New crime saved successfully!');
       }
-      navigation.goBack();
+      setIsSaved(true);
+      
+      // Reset saved status after 3 seconds
+      setTimeout(() => {
+        setIsSaved(false);
+      }, 3000);
     } catch (error) {
       Alert.alert('Error', 'Failed to save crime');
     }
@@ -108,21 +129,41 @@ const CrimeDetailScreen = ({ navigation }: { navigation: any }) => {
 
   return (
     <View style={[styles.container, { backgroundColor: currentTheme.backgroundColor }]}>
-      <PhotoSelector photo={photo} setPhoto={setPhoto} theme={currentTheme} />
-      <TitleInput title={title} setTitle={setTitle} theme={currentTheme} />
-      <Text style={[styles.label, { color: currentTheme.textColor }]}>Details:</Text>
-      <DetailsInput details={details} setDetails={setDetails} theme={currentTheme} />
-      <DateSelector date={date} setDate={setDate} theme={currentTheme} />
-      <SolvedCheckbox solved={solved} setSolved={setSolved} theme={currentTheme} />
-      <SaveButton onPress={saveCrime} theme={currentTheme} />
+      <Toast 
+        visible={toastVisible} 
+        message={toastMessage}
+        type="success"
+      />
+      <Title>Crime Details</Title>
+      <PhotoSelector photo={photo} setPhoto={setPhoto} />
+      <TextInput
+        label="Title"
+        value={title}
+        onChangeText={setTitle}
+        placeholder="Enter crime title"
+      />
+      <TextInput
+        label="Details"
+        value={details}
+        onChangeText={setDetails}
+        placeholder="Enter crime details"
+        multiline
+        numberOfLines={4}
+      />
+      <DateSelector date={date} setDate={setDate} />
+      <SolvedCheckbox solved={solved} setSolved={setSolved} />
+      <SaveButton onPress={saveCrime} isSaved={isSaved} />
       {id && <DeleteButton onPress={handleDelete} />}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16 },
-  label: { fontSize: 16, fontWeight: '600', marginBottom: 8 },
+  container: { 
+    flex: 1, 
+    padding: 16,
+    position: 'relative',
+  },
 });
 
 export default CrimeDetailScreen;
